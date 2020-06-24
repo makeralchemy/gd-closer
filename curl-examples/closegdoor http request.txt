@@ -1,0 +1,7 @@
+POST /v1/devices/dddddddddddddddddddddddd/closegdoor HTTP/1.1
+Host: api.particle.io
+User-Agent: curl/7.52.1
+Accept: */*
+Authorization: Bearer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Content-Length: 18
+Content-Type: application/x-www-form-urlencoded
