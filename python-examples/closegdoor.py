@@ -11,7 +11,7 @@ data = {
 
 response = requests.post('https://api.particle.io/v1/devices/dddddddddddddddddddddddd/closegdoor', headers=headers, data=data)
 
-print response.status_code
-print response.text
+print(response.status_code)
+print(response.text)
 
 
