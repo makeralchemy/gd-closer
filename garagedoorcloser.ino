@@ -1,8 +1,8 @@
 
 // intialize published variables
-String version = "0.1.6";
+String version = "0.1.7";
 String gdoor_status = "uninitialized";
-// String argument = "uninitialized";
+String argument = "uninitialized";
 String last_operation = "none yet";
 
 int RELAY1 = D3;      // relay for the garage door button
@@ -30,7 +30,7 @@ void setup() {
 
   
   Particle.variable("version", version);                    // version number of this program
-  // Particle.variable("argument", argument);                  // argument passed to the functions
+  Particle.variable("argument", argument);                  // argument passed to the functions
   Particle.variable("gdoorstatus", gdoor_status);           // garage door status
   Particle.variable("last_operation", last_operation);      // last function called
   
@@ -52,8 +52,7 @@ void loop() {
 // This will be called via a POST from the Raspberry Pi that 
 // monitors the garage door.
 bool setgdopen(String command) {
-    // command is for future use
-    // argument = command;
+    argument = command;
     gdoor_status = "open";
     last_operation = "setgdopen";
     return 0;
@@ -63,8 +62,7 @@ bool setgdopen(String command) {
 // This will be called via a POST from the Raspberry Pi that 
 // monitors the garage door.
 bool setgdclosed(String command) {
-    // command is for future use
-    // argument = command;
+    argument = command;
     gdoor_status = "closed";
     last_operation = "setgdclosed";
     return 0;
@@ -74,8 +72,7 @@ bool setgdclosed(String command) {
 // before pushing the button to control the garage door.  Return 
 // a status code indicating whether the command is accepted.
 bool closegdoor(String command) {
-    // command is for future use
-    // argument = command;
+    argument = command;
     last_operation = "closegdoor";
     if (gdoor_status == "open") {
         pushbutton();
