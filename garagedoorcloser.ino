@@ -1,9 +1,9 @@
-
 // intialize published variables
-String version = "0.1.7";
+String version = "0.1.8";
 String gdoor_status = "uninitialized";
 String argument = "uninitialized";
 String last_operation = "none yet";
+String last_updated = "uninitialized"; // last time door status updated (GMT)
 
 int RELAY1 = D3;      // relay for the garage door button
 int RELAY2 = D4;
@@ -27,12 +27,17 @@ void setup() {
   digitalWrite(RELAY2, LOW);
   digitalWrite(RELAY3, LOW);
   digitalWrite(RELAY4, LOW);
+  
+  // Setup time synchronization
+  Particle.syncTime();
+  waitFor(Particle.syncTimeDone, 30000); // wait for up to 30 seconds
 
   
   Particle.variable("version", version);                    // version number of this program
   Particle.variable("argument", argument);                  // argument passed to the functions
   Particle.variable("gdoorstatus", gdoor_status);           // garage door status
   Particle.variable("last_operation", last_operation);      // last function called
+  Particle.variable("last_updated", last_updated);
   
   Particle.function("setgdopen", setgdopen);          // set garage door status to 'open'
   Particle.function("setgdclosed", setgdclosed);      // set garage door status to 'closed'
@@ -55,6 +60,7 @@ bool setgdopen(String command) {
     argument = command;
     gdoor_status = "open";
     last_operation = "setgdopen";
+    last_updated = Time.format(Time.now(), TIME_FORMAT_ISO8601_FULL);
     return 0;
 }
 
@@ -65,6 +71,7 @@ bool setgdclosed(String command) {
     argument = command;
     gdoor_status = "closed";
     last_operation = "setgdclosed";
+    last_updated = Time.format(Time.now(), TIME_FORMAT_ISO8601_FULL);
     return 0;
 }
 
