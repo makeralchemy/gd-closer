@@ -60,7 +60,7 @@ bool setgdopen(String command) {
     argument = command;
     gdoor_status = "open";
     last_operation = "setgdopen";
-    last_updated = Time.format(Time.now(), TIME_FORMAT_ISO8601_FULL);
+    last_updated = Time.format(Time.now(), "%b-%d %H:%M");
     return 0;
 }
 
@@ -71,7 +71,7 @@ bool setgdclosed(String command) {
     argument = command;
     gdoor_status = "closed";
     last_operation = "setgdclosed";
-    last_updated = Time.format(Time.now(), TIME_FORMAT_ISO8601_FULL);
+    last_updated = Time.format(Time.now(), "%b-%d %H:%M");
     return 0;
 }
 
