@@ -1,9 +1,9 @@
 // intialize published variables
-String version = "0.1.8";
+String version = "0.1.10";
 String gdoor_status = "uninitialized";
 String argument = "uninitialized";
-String last_operation = "none yet";
-String last_updated = "uninitialized"; // last time door status updated (GMT)
+String last_operation = "uninitialized";
+String updated_gmt = "uninitialized"; // last time door status updated (GMT)
 
 int RELAY1 = D3;      // relay for the garage door button
 int RELAY2 = D4;
@@ -37,7 +37,7 @@ void setup() {
   Particle.variable("argument", argument);                  // argument passed to the functions
   Particle.variable("gdoorstatus", gdoor_status);           // garage door status
   Particle.variable("last_operation", last_operation);      // last function called
-  Particle.variable("last_updated", last_updated);
+  Particle.variable("updated_gmt", updated_gmt);            // last time status was updated - GMT
   
   Particle.function("setgdopen", setgdopen);          // set garage door status to 'open'
   Particle.function("setgdclosed", setgdclosed);      // set garage door status to 'closed'
@@ -60,7 +60,7 @@ bool setgdopen(String command) {
     argument = command;
     gdoor_status = "open";
     last_operation = "setgdopen";
-    last_updated = Time.format(Time.now(), "%b-%d %H:%M");
+    updated_gmt = Time.format(Time.now(), "%b-%d %H:%M");
     return 0;
 }
 
@@ -71,7 +71,7 @@ bool setgdclosed(String command) {
     argument = command;
     gdoor_status = "closed";
     last_operation = "setgdclosed";
-    last_updated = Time.format(Time.now(), "%b-%d %H:%M");
+    updated_gmt = Time.format(Time.now(), "%b-%d %H:%M");
     return 0;
 }
 
