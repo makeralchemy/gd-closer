@@ -1,14 +1,21 @@
+
 // intialize published variables
-String version        = "0.1.15";        // current code version
+String version        = "0.1.27";        // current code version
 String gdoor_status   = "uninitialized"; // current garage door status
 String argument       = "uninitialized"; //argument to last operation
 String last_operation = "uninitialized"; // last operation performed
 String updated_gmt    = "uninitialized"; // last time door status updated (GMT)
 String updated_pdt    = "uninitialized"; // last time door status updated (PDT)
 String updated_pst    = "uninitialized"; // last time door status updated (PST)
+String auth_status    = "";              // authorization status from closegd function
 
 const int PDT_OFFSET = -7 * 3600;        // offset to GMT for pacific daylight-savings time
 const int PST_OFFSET = -8 * 3600;        // offset to GMT for pacific standard time
+
+const bool OP_SUCCESS = 0;               // operation succeeded
+const bool OP_FAIL    = 1;               // operation failed
+
+const String AUTH_CODE = "xxxx";         // authorization code to open the garage door (not the real code)
 
 int RELAY1 = D3;      // relay for the garage door button
 int RELAY2 = D4;      // unused relay
@@ -40,17 +47,18 @@ void setup() {
   waitFor(Particle.syncTimeDone, 30000); // wait for up to 30 seconds
 
   
-  Particle.variable("version", version);                // version number of this program
-  Particle.variable("argument", argument);              // argument passed to the functions
-  Particle.variable("gdoorstatus", gdoor_status);       // garage door status
-  Particle.variable("last_operation", last_operation);  // last function called
+  Particle.variable("version", version);                 // version number of this program
+  Particle.variable("argument", argument);               // argument passed to the functions
+  Particle.variable("gdoorstatus", gdoor_status);        // garage door status
+  Particle.variable("last_operation", last_operation);   // last function called
   Particle.variable("stat-gmt", updated_gmt);            // last time status was updated - GMT
   Particle.variable("stat-pdt", updated_pdt);            // last time status was updated - PDT
   Particle.variable("stat-pst", updated_pst);            // last time status was updated - PST
+  Particle.variable("close_authz", auth_status);         // authorization status for door closing operation
   
-  Particle.function("setgdopen", setgdopen);            // set garage door status to 'open'
-  Particle.function("setgdclosed", setgdclosed);        // set garage door status to 'closed'
-  Particle.function("closegdoor", closegdoor);          // close the garage door
+  Particle.function("setgdopen", setgdopen);             // set garage door status to 'open'
+  Particle.function("setgdclosed", setgdclosed);         // set garage door status to 'closed'
+  Particle.function("closegdoor", closegdoor);           // close the garage door
 }
 
 
@@ -63,6 +71,13 @@ void loop() {
     delay(1000);                            // wait a second
 }
 
+void update_last_action_timestamp() {
+    current_time = Time.now();
+    updated_gmt = Time.format(current_time, "%b-%d %H:%M");
+    updated_pdt = Time.format(current_time + PDT_OFFSET, "%b-%d %I:%M %p");
+    updated_pst = Time.format(current_time + PST_OFFSET, "%b-%d %I:%M %p");
+}
+
 // Set the garage door status to open.
 // This will be called via a POST from the Raspberry Pi that 
 // monitors the garage door.
@@ -70,11 +85,9 @@ bool setgdopen(String command) {
     argument = command;
     gdoor_status = "open";
     last_operation = "setgdopen";
-    current_time = Time.now();
-    updated_gmt = Time.format(current_time, "%b-%d %H:%M");
-    updated_pdt = Time.format(current_time + PDT_OFFSET, "%b-%d %I:%M %p");
-    updated_pst = Time.format(current_time + PST_OFFSET, "%b-%d %I:%M %p");
-    return 0;
+    update_last_action_timestamp();
+    auth_status = "";                  // authorization does not apply to this function
+    return OP_SUCCESS;
 }
 
 // Set the garage door status to closed.
@@ -84,25 +97,32 @@ bool setgdclosed(String command) {
     argument = command;
     gdoor_status = "closed";
     last_operation = "setgdclosed";
-    current_time = Time.now();
-    updated_gmt = Time.format(current_time, "%b-%d %H:%M");
-    updated_pdt = Time.format(current_time + PDT_OFFSET, "%b-%d %I:%M %p");
-    updated_pst = Time.format(current_time + PST_OFFSET, "%b-%d %I:%M %p");
-    return 0;
+    update_last_action_timestamp();
+    auth_status = "";                   // authorization does not apply to this function
+    return OP_SUCCESS;
 }
 
-// Called to close the garage door.  Check to see if it's open
-// before pushing the button to control the garage door.  Return 
-// a status code indicating whether the command is accepted.
+// Called to close the garage door. 
+// First check to see if the argument matches the authorization code, if not don't
+// open the door and return an error code.
+// Check to see if it's open before pushing the button to control the garage door.  
+// Return a status code indicating whether the command is accepted.
 bool closegdoor(String command) {
     argument = command;
     last_operation = "closegdoor";
-    if (gdoor_status == "open") {
-        pushbutton();
-        return 0;
+    if (argument.equals(AUTH_CODE)) {
+        auth_status = "Success";
+        if (gdoor_status == "open") {
+            pushbutton();
+            update_last_action_timestamp();
+            return OP_SUCCESS;
+        } else {
+            // door is already closed. return an error.
+            return OP_FAIL;
+        }
     } else {
-        // door is already closed. return an error.
-        return 1;
+        auth_status = "Failed";
+        return OP_FAIL; // invalid passcode
     }
 }
 
